@@ -1,5 +1,6 @@
 from .wake_word import WakeWordDetector
 from .stt import SpeechToText
+from .tts import TextToSpeech
 import sounddevice as sd
 import numpy as np
 import time
@@ -15,6 +16,7 @@ class VoiceAssistant:
         
         self.wake_word_detector = WakeWordDetector()
         self.stt = SpeechToText()
+        self.tts = TextToSpeech()
         self.silence_threshold = 500  # Adjust this value based on testing
         print("Assistant initialized!")
 
@@ -51,6 +53,9 @@ class VoiceAssistant:
                                     ai_response = self.process_with_gpt(text)
                                     if ai_response:
                                         print(f"\nAI Response: {ai_response}")
+                                        # Convert response to speech using Coqui TTS
+                                        print("Converting to speech...")
+                                        self.tts.speak(ai_response)
                                     
                                     print("\nListening for your next message... (or wait for timeout)")
                                 else:
