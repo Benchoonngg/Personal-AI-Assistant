@@ -3,6 +3,7 @@ venv
 model
 config/wake_words
 src/__pycache__/
+history
 
 
 # Byte-compiled / optimized / DLL files

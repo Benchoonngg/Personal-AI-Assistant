@@ -1,12 +1,18 @@
+import os
+import logging
 from TTS.api import TTS
 import sounddevice as sd
 import numpy as np
 
 class TextToSpeech:
     def __init__(self):
-        print("Initializing Coqui TTS...")
-        self.tts = TTS(model_name="tts_models/en/ljspeech/fast_pitch")
-        print("TTS model loaded")
+        # Suppress TTS initialization messages
+        logging.getLogger('TTS').setLevel(logging.ERROR)
+        os.environ['TTS_VERBOSE'] = '0'
+        
+        print("Initializing TTS...")
+        self.tts = TTS(model_name="tts_models/en/ljspeech/fast_pitch", progress_bar=False)
+        print("TTS ready!")
 
     def speak(self, text):
         try:
