@@ -4,6 +4,8 @@ model
 config/wake_words
 src/__pycache__/
 history
+conversations.db
+chroma_db
 
 
 # Byte-compiled / optimized / DLL files

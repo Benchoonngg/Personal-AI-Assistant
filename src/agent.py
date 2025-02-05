@@ -9,6 +9,7 @@ from dotenv import load_dotenv
 from openai import OpenAI
 import json
 from datetime import datetime
+from .conversation_retrieval import ConversationRetrieval
 
 class VoiceAssistant:
     def __init__(self):
@@ -32,6 +33,9 @@ class VoiceAssistant:
         
         # Generate unique filename for this session
         self.conversation_file = f"history/conversation_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
+        
+        self.retriever = ConversationRetrieval()
+        self.retriever.clear_history(delete_files=True)  # True to delete JSON files too
         print("Assistant initialized!")
 
     def load_config(self):
@@ -57,19 +61,39 @@ class VoiceAssistant:
 
     def process_with_gpt(self, text):
         try:
-            self.conversation_history.append({"role": "user", "content": text})
+            # Get relevant history for the current query
+            relevant_history = self.retriever.get_relevant_history(text)
+            
+            # Add context from relevant history
+            if relevant_history:
+                context_message = {
+                    "role": "system",
+                    "content": "Relevant conversation history:\n" + "\n".join(relevant_history)
+                }
+                messages = [
+                    self.config["system_prompt"],
+                    context_message,
+                    {"role": "user", "content": text}
+                ]
+            else:
+                messages = [
+                    self.config["system_prompt"],
+                    {"role": "user", "content": text}
+                ]
+
+            # Get response from GPT
             response = self.client.chat.completions.create(
                 model=self.config["model"],
-                messages=self.conversation_history,
+                messages=messages,
                 temperature=self.config["temperature"]
             )
+            
             assistant_message = response.choices[0].message.content
+            self.conversation_history.append({"role": "user", "content": text})
             self.conversation_history.append({"role": "assistant", "content": assistant_message})
             
-            # Debug print to confirm model
-            print(f"Using model: {response.model}")
-            
             return assistant_message
+            
         except Exception as e:
             print(f"Error with GPT processing: {e}")
             return None
@@ -131,7 +155,7 @@ class VoiceAssistant:
             print(f"Error: {e}")
             self.save_conversation()
 
-    def record_until_silence(self, sample_rate=16000, silence_duration=2):
+    def record_until_silence(self, sample_rate=16000, silence_duration=1.5):
         print("Recording started...")
         silence_threshold = 500  # Adjust this value based on testing
         silence_frames = 0
