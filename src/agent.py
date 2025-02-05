@@ -35,7 +35,6 @@ class VoiceAssistant:
         self.conversation_file = f"history/conversation_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
         
         self.retriever = ConversationRetrieval()
-        self.retriever.clear_history(delete_files=True)  # True to delete JSON files too
         print("Assistant initialized!")
 
     def load_config(self):
