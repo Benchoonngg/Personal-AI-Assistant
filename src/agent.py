@@ -18,15 +18,25 @@ class VoiceAssistant:
         self.stt = SpeechToText()
         self.tts = TextToSpeech()
         self.silence_threshold = 500  # Adjust this value based on testing
+        self.conversation_history = []  # Store conversation history
         print("Assistant initialized!")
 
     def process_with_gpt(self, text):
         try:
+            # Add user message to history
+            self.conversation_history.append({"role": "user", "content": text})
+            
+            # Send entire conversation history to maintain context
             response = self.client.chat.completions.create(
                 model="gpt-4",
-                messages=[{"role": "user", "content": text}]
+                messages=self.conversation_history
             )
-            return response.choices[0].message.content
+            
+            # Add assistant's response to history
+            assistant_message = response.choices[0].message.content
+            self.conversation_history.append({"role": "assistant", "content": assistant_message})
+            
+            return assistant_message
         except Exception as e:
             print(f"Error with GPT processing: {e}")
             return None
@@ -75,7 +85,7 @@ class VoiceAssistant:
         except Exception as e:
             print(f"Error: {e}")
 
-    def record_until_silence(self, sample_rate=16000, silence_duration=1):
+    def record_until_silence(self, sample_rate=16000, silence_duration=2):
         print("Recording started...")
         silence_threshold = 500  # Adjust this value based on testing
         silence_frames = 0

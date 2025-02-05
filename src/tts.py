@@ -5,14 +5,14 @@ import numpy as np
 class TextToSpeech:
     def __init__(self):
         print("Initializing Coqui TTS...")
-        self.tts = TTS(model_name="tts_models/en/ljspeech/tacotron2-DDC")
+        self.tts = TTS(model_name="tts_models/en/ljspeech/fast_pitch")
         print("TTS model loaded")
 
     def speak(self, text):
         try:
             print("Generating speech...")
-            # Generate audio wave
-            wav = self.tts.tts(text)
+            # Generate audio wave with increased speed
+            wav = self.tts.tts(text, speed=1.5)
             
             # Convert to float32 and normalize
             audio_data = np.array(wav, dtype=np.float32)
