@@ -2,7 +2,7 @@ import whisper
 import numpy as np
 
 class SpeechToText:
-    def __init__(self, model_name="tiny.en"):
+    def __init__(self, model_name="base"):
         print("Loading Whisper model...")
         self.model = whisper.load_model(model_name)
         print("Whisper model loaded")

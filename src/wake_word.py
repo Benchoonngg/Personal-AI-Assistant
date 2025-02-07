@@ -1,12 +1,17 @@
 import pvporcupine
 import sounddevice as sd
 import numpy as np
+from dotenv import load_dotenv
+import os
+
+load_dotenv()
+PVPORCUPINE = os.getenv("PVPORCUPINE")
 
 class WakeWordDetector:
     def __init__(self, wake_word_path="config/wake_words/Hey-Austin_en_mac_v3_0_0.ppn"):
         print("Initializing wake word detector...")
         self.porcupine = pvporcupine.create(
-            access_key="P93SpbCuwK3lWXL0gm5nQhwZC4trwMY0q5Q7o0V6x5PY7GmnbWJScQ==",  # Replace with your actual AccessKey
+            access_key=PVPORCUPINE,  # Replace with your actual AccessKey
             keyword_paths=[wake_word_path]
         )
         print(f"Sample rate: {self.porcupine.sample_rate}")

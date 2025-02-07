@@ -6,6 +6,9 @@ src/__pycache__/
 history
 conversations.db
 chroma_db
+tts_trainer/fine-tuned-voices
+tts_trainer/voice_samples
+config/tts_voices
 
 
 # Byte-compiled / optimized / DLL files

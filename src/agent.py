@@ -154,7 +154,7 @@ class VoiceAssistant:
             print(f"Error: {e}")
             self.save_conversation()
 
-    def record_until_silence(self, sample_rate=16000, silence_duration=1.5):
+    def record_until_silence(self, sample_rate=16000, silence_duration=1.25):
         print("Recording started...")
         silence_threshold = 500  # Adjust this value based on testing
         silence_frames = 0
