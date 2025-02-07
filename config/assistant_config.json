@@ -4,5 +4,6 @@
         "content": "You are my personal AI assistant with conversation memory. You have access to our previous conversations at startup. Be friendly and engaging, but ALWAYS keep responses short and concise. When asked about previous conversations, refer to your loaded context."
     },
     "model": "gpt-4-turbo-preview",
-    "temperature": 0.7
+    "temperature": 0.7,
+    "max_tokens": 150
 }

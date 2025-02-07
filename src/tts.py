@@ -30,7 +30,7 @@ class TextToSpeech:
             wav = self.tts.tts(
                 text=text,
                 speaker=self.speaker,  # Specify male speaker
-                speed=2.0  # Increased speed from 1.8 to 2.0
+                speed=1.2  # Increased speed from 1.8 to 2.0
             )
             
             # Convert to float32 and normalize

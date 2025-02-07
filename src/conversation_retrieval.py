@@ -11,16 +11,27 @@ class ConversationRetrieval:
         self.history_dir = history_dir
         self.embeddings = OpenAIEmbeddings()
         self.text_splitter = RecursiveCharacterTextSplitter(
-            chunk_size=1000,
-            chunk_overlap=200,
+            chunk_size=500,
+            chunk_overlap=100,
             length_function=len,
+            separators=["\n\n", "\n", " ", ""]
         )
         
-        # Ensure history directory exists
         os.makedirs(self.history_dir, exist_ok=True)
         
-        # Initialize vector store
-        self.refresh_vector_store()
+        if not os.path.exists("./chroma_db"):
+            self.refresh_vector_store()
+        else:
+            try:
+                self.vector_store = Chroma(
+                    persist_directory="./chroma_db",
+                    embedding_function=self.embeddings
+                )
+                print("Loaded existing vector store")
+            except Exception as e:
+                print(f"Error loading vector store: {e}")
+                self.refresh_vector_store()
+        
         print("Conversation retrieval initialized!")
 
     def load_conversation_files(self):
@@ -33,15 +44,18 @@ class ConversationRetrieval:
                     try:
                         with open(file_path, 'r', encoding='utf-8') as f:
                             data = json.load(f)
+                            conversation_text = []
                             for msg in data.get('conversation', []):
                                 if msg['role'] != 'system':
                                     formatted_msg = f"[{msg['role']}]: {msg['content']}"
-                                    conversations.append(formatted_msg)
+                                    conversation_text.append(formatted_msg)
+                            if conversation_text:
+                                conversations.append("\n".join(conversation_text))
                     except Exception as e:
                         print(f"Error reading file {filename}: {e}")
                         continue
             
-            print(f"Loaded {len(conversations)} messages from {len(os.listdir(self.history_dir))} files")
+            print(f"Loaded conversations from {len(os.listdir(self.history_dir))} files")
             return conversations
             
         except Exception as e:
@@ -51,19 +65,16 @@ class ConversationRetrieval:
     def refresh_vector_store(self):
         """Create new vector store from current history"""
         try:
-            # Remove old vector store if exists
             if os.path.exists("./chroma_db"):
                 shutil.rmtree("./chroma_db")
                 print("Cleared previous vector store")
 
-            # Load conversations
             conversations = self.load_conversation_files()
             if not conversations:
                 print("No conversations found in history")
                 self.vector_store = None
                 return
 
-            # Create new vector store
             print("Creating new vector store...")
             docs = self.text_splitter.create_documents(conversations)
             self.vector_store = Chroma.from_documents(
@@ -77,15 +88,34 @@ class ConversationRetrieval:
             print(f"Error creating vector store: {e}")
             self.vector_store = None
 
-    def get_relevant_history(self, query, k=3):
+    def get_relevant_history(self, query, k=5):
         """Get relevant conversation chunks"""
         try:
             if not hasattr(self, 'vector_store') or self.vector_store is None:
                 print("No vector store available")
                 return []
 
-            results = self.vector_store.similarity_search(query, k=k)
-            return [doc.page_content for doc in results]
+            # Create multiple search queries for better coverage
+            search_queries = [
+                query,  # Original query
+                " ".join([word for word in query.split() if len(word) > 3]),  # Key words only
+                "personal information name job role",  # Always include personal context
+            ]
+            
+            all_results = []
+            for q in search_queries:
+                results = self.vector_store.similarity_search(q, k=k)
+                all_results.extend([doc.page_content for doc in results])
+            
+            # Remove duplicates while preserving order
+            seen = set()
+            unique_results = []
+            for result in all_results:
+                if result not in seen:
+                    seen.add(result)
+                    unique_results.append(result)
+            
+            return unique_results[:k]  # Return top k unique results
 
         except Exception as e:
             print(f"Error retrieving history: {e}")
@@ -94,12 +124,10 @@ class ConversationRetrieval:
     def clear_history(self, delete_files=False):
         """Clear vector store and optionally delete JSON files"""
         try:
-            # Always clear vector store
             if os.path.exists("./chroma_db"):
                 shutil.rmtree("./chroma_db")
                 print("Cleared vector store")
 
-            # Optionally delete JSON files
             if delete_files:
                 for file in os.listdir(self.history_dir):
                     if file.endswith('.json'):
